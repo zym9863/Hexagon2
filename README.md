@@ -1,5 +1,7 @@
 # 🎯 旋转六边形小球物理模拟
 
+[🇺🇸 English](README-EN.md) | 🇨🇳 中文
+
 一个基于HTML5 Canvas的交互式物理模拟应用程序，展示真实的物理引擎效果。
 
 ![Physics Simulation](https://img.shields.io/badge/Physics-Simulation-blue)
