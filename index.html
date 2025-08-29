@@ -66,20 +66,11 @@
         </div>
         
         <!-- 加载指示器 -->
-        <div id="loading-indicator" style="
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            z-index: 9999;
-            display: none;
-        ">
-            <div class="loading-spinner"></div>
-            <p style="margin-top: 10px; color: #666;">正在初始化物理引擎...</p>
+        <div id="loading-indicator" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">正在初始化物理引擎...</p>
+            </div>
         </div>
     </div>
     
