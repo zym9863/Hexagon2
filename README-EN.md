@@ -43,10 +43,10 @@ Simply open the `index.html` file in your browser to start experiencing.
 ### Local Setup
 ```bash
 # Clone the project
-git clone https://github.com/zym9863/Hexagon.git
+git clone https://github.com/zym9863/hexagon2.git
 
 # Enter project directory
-cd Hexagon
+cd hexagon2
 
 # Run with local server (recommended)
 python -m http.server 8000

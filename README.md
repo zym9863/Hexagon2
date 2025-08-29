@@ -43,10 +43,10 @@
 ### 本地运行
 ```bash
 # 克隆项目
-git clone https://github.com/zym9863/Hexagon.git
+git clone https://github.com/zym9863/hexagon2.git
 
 # 进入项目目录
-cd Hexagon
+cd hexagon2
 
 # 使用本地服务器运行（推荐）
 python -m http.server 8000
