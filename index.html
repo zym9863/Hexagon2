@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>旋转六边形小球物理模拟 - 交互式物理引擎演示</title>
+    <meta name="description" content="基于HTML5 Canvas的交互式物理模拟，展示真实的重力、摩擦力和碰撞检测效果">
+    <meta name="keywords" content="物理模拟,HTML5 Canvas,JavaScript,物理引擎,碰撞检测">
+    <meta name="author" content="AI Assistant">
+    
+    <!-- 性能优化 -->
+    <link rel="preload" href="js/Vector2D.js" as="script">
+    <link rel="preload" href="js/Config.js" as="script">
+    <link rel="preload" href="styles.css" as="style">
+    
+    <!-- PWA支持 -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="物理模拟">
+    
+    <!-- 图标 -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon fill='%23667eea' points='50,10 90,30 90,70 50,90 10,70 10,30'/><circle fill='%23ff5722' cx='50' cy='50' r='8'/></svg>">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>旋转六边形小球物理模拟</h1>
+        </header>
+        
+        <main class="canvas-container">
+            <canvas id="physics-canvas"></canvas>
+        </main>
+        
+        <div class="controls">
+            <button id="reset-btn" title="重置游戏 (R键)">🔄 重置</button>
+            <button id="pause-btn" title="暂停/继续 (空格键)">⏸️ 暂停</button>
+            <button id="preset-btn" title="切换预设配置 (1-5键)" style="display: none;">🎛️ 预设</button>
+        </div>
+        
+        <!-- 帮助信息 -->
+        <div class="help-info" style="display: none;">
+            <h3>🎮 控制说明</h3>
+            <div class="help-grid">
+                <div class="help-item">
+                    <kbd>空格</kbd> 暂停/继续
+                </div>
+                <div class="help-item">
+                    <kbd>R</kbd> 重置游戏
+                </div>
+                <div class="help-item">
+                    <kbd>D</kbd> 调试模式
+                </div>
+                <div class="help-item">
+                    <kbd>P</kbd> 性能模式
+                </div>
+                <div class="help-item">
+                    <kbd>1-5</kbd> 预设配置
+                </div>
+                <div class="help-item">
+                    <kbd>Shift+点击</kbd> 重置小球位置
+                </div>
+            </div>
+        </div>
+        
+        <!-- 加载指示器 -->
+        <div id="loading-indicator" style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 9999;
+            display: none;
+        ">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 10px; color: #666;">正在初始化物理引擎...</p>
+        </div>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/ErrorHandler.js"></script>
+    <script src="js/Config.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单响应式测试 - 旋转六边形小球物理模拟</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .test-controls {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        .test-controls button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info" id="test-info">
+        <div>屏幕: <span id="screen-info">-</span></div>
+        <div>视口: <span id="viewport-info">-</span></div>
+        <div>Canvas: <span id="canvas-info">-</span></div>
+        <div>缩放: <span id="scale-info">-</span></div>
+        <div>状态: <span id="status-info">初始化中...</span></div>
+    </div>
+    
+    <div class="test-controls">
+        <button onclick="testMobile()">手机模式</button>
+        <button onclick="testTablet()">平板模式</button>
+        <button onclick="testDesktop()">桌面模式</button>
+        <button onclick="resetSize()">重置</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>响应式测试</h1>
+        </header>
+        
+        <main class="canvas-container">
+            <canvas id="physics-canvas"></canvas>
+        </main>
+        
+        <div class="controls">
+            <button id="reset-btn">重置</button>
+            <button id="pause-btn">暂停</button>
+        </div>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/ErrorHandler.js"></script>
+    <script src="js/Config.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    
+    <script>
+        let game = null;
+        
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (!window.errorHandler) {
+                    window.errorHandler = new ErrorHandler();
+                }
+                
+                game = new Game('physics-canvas');
+                game.start();
+                
+                updateInfo();
+                setInterval(updateInfo, 1000);
+                
+                document.getElementById('status-info').textContent = '运行中';
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                document.getElementById('status-info').textContent = '初始化失败';
+            }
+        });
+        
+        // 更新信息显示
+        function updateInfo() {
+            const screenInfo = `${screen.width}x${screen.height}`;
+            const viewportInfo = `${window.innerWidth}x${window.innerHeight}`;
+            
+            const canvas = document.getElementById('physics-canvas');
+            const canvasInfo = canvas ? `${canvas.clientWidth}x${canvas.clientHeight}` : '-';
+            
+            const scaleInfo = game && game.renderer ? game.renderer.getScaleFactor().toFixed(2) : '-';
+            
+            document.getElementById('screen-info').textContent = screenInfo;
+            document.getElementById('viewport-info').textContent = viewportInfo;
+            document.getElementById('canvas-info').textContent = canvasInfo;
+            document.getElementById('scale-info').textContent = scaleInfo;
+        }
+        
+        // 测试不同屏幕尺寸
+        function testMobile() {
+            document.body.style.width = '375px';
+            document.body.style.height = '667px';
+            document.body.style.overflow = 'hidden';
+            triggerResize();
+        }
+        
+        function testTablet() {
+            document.body.style.width = '768px';
+            document.body.style.height = '1024px';
+            document.body.style.overflow = 'hidden';
+            triggerResize();
+        }
+        
+        function testDesktop() {
+            document.body.style.width = '1200px';
+            document.body.style.height = '800px';
+            document.body.style.overflow = 'hidden';
+            triggerResize();
+        }
+        
+        function resetSize() {
+            document.body.style.width = '';
+            document.body.style.height = '';
+            document.body.style.overflow = '';
+            triggerResize();
+        }
+        
+        function triggerResize() {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                setTimeout(updateInfo, 200);
+            }, 100);
+        }
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', updateInfo);
+    </script>
+</body>
+</html>

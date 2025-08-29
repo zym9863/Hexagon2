@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式设计测试 - 旋转六边形小球物理模拟</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 测试工具样式 */
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .test-controls h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #4CAF50;
+        }
+        
+        .test-controls button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .test-controls button:hover {
+            background: #1976D2;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .test-info div {
+            margin: 2px 0;
+        }
+        
+        .performance-monitor {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            z-index: 1000;
+        }
+        
+        .performance-monitor h4 {
+            margin: 0 0 8px 0;
+            color: #FF9800;
+            font-size: 12px;
+        }
+        
+        .performance-good { color: #4CAF50; }
+        .performance-warning { color: #FF9800; }
+        .performance-error { color: #F44336; }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h3>响应式测试工具</h3>
+        
+        <div class="test-info">
+            <div>屏幕: <span id="screen-size">-</span></div>
+            <div>视口: <span id="viewport-size">-</span></div>
+            <div>Canvas: <span id="canvas-size">-</span></div>
+            <div>DPR: <span id="device-pixel-ratio">-</span></div>
+            <div>缩放: <span id="scale-factor">-</span></div>
+        </div>
+        
+        <div>
+            <button onclick="testScreenSize('mobile')">手机 (375x667)</button>
+            <button onclick="testScreenSize('tablet')">平板 (768x1024)</button>
+            <button onclick="testScreenSize('desktop')">桌面 (1200x800)</button>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <button onclick="testOrientation('portrait')">竖屏</button>
+            <button onclick="testOrientation('landscape')">横屏</button>
+            <button onclick="resetWindow()">重置</button>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <button onclick="togglePerformanceMonitor()">性能监控</button>
+            <button onclick="runResponsiveTests()">运行测试</button>
+        </div>
+    </div>
+    
+    <div class="performance-monitor" id="performance-monitor" style="display: none;">
+        <h4>性能监控</h4>
+        <div>FPS: <span id="fps-display">-</span></div>
+        <div>帧时间: <span id="frame-time-display">-</span>ms</div>
+        <div>Canvas尺寸: <span id="canvas-dimensions">-</span></div>
+        <div>内存: <span id="memory-usage">-</span></div>
+        <div>状态: <span id="performance-status">-</span></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>响应式设计测试</h1>
+        </header>
+        
+        <main class="canvas-container">
+            <canvas id="physics-canvas"></canvas>
+        </main>
+        
+        <div class="controls">
+            <button id="reset-btn">重置</button>
+            <button id="pause-btn">暂停</button>
+        </div>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/ErrorHandler.js"></script>
+    <script src="js/Config.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    
+    <script>
+        // 全局游戏实例
+        let game = null;
+        let performanceMonitorInterval = null;
+        
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing responsive test...');
+            
+            try {
+                // 确保ErrorHandler已初始化
+                if (!window.errorHandler) {
+                    window.errorHandler = new ErrorHandler();
+                }
+                
+                // 创建游戏实例
+                game = new Game('physics-canvas');
+                
+                // 启动游戏
+                game.start();
+                
+                // 更新显示信息
+                updateDisplayInfo();
+                
+                // 设置窗口大小变化监听
+                window.addEventListener('resize', () => {
+                    setTimeout(updateDisplayInfo, 100);
+                });
+                
+                console.log('Responsive test initialized successfully!');
+                
+            } catch (error) {
+                console.error('Failed to initialize responsive test:', error);
+                alert('初始化失败: ' + error.message);
+            }
+        });
+        
+        // 更新显示信息
+        function updateDisplayInfo() {
+            const screenSize = `${screen.width}x${screen.height}`;
+            const viewportSize = `${window.innerWidth}x${window.innerHeight}`;
+            const canvas = document.getElementById('physics-canvas');
+            const canvasSize = canvas ? `${canvas.width}x${canvas.height}` : '-';
+            const dpr = window.devicePixelRatio || 1;
+            const scaleFactor = game && game.renderer ? game.renderer.getScaleFactor() : '-';
+            
+            document.getElementById('screen-size').textContent = screenSize;
+            document.getElementById('viewport-size').textContent = viewportSize;
+            document.getElementById('canvas-size').textContent = canvasSize;
+            document.getElementById('device-pixel-ratio').textContent = dpr.toFixed(2);
+            document.getElementById('scale-factor').textContent = typeof scaleFactor === 'number' ? scaleFactor.toFixed(2) : scaleFactor;
+        }
+        
+        // 测试不同屏幕尺寸
+        function testScreenSize(type) {
+            let width, height;
+            
+            switch (type) {
+                case 'mobile':
+                    width = 375;
+                    height = 667;
+                    break;
+                case 'tablet':
+                    width = 768;
+                    height = 1024;
+                    break;
+                case 'desktop':
+                    width = 1200;
+                    height = 800;
+                    break;
+                default:
+                    return;
+            }
+            
+            // 调整窗口大小（如果可能）
+            if (window.resizeTo) {
+                window.resizeTo(width, height);
+            } else {
+                // 模拟不同屏幕尺寸的CSS
+                document.body.style.width = width + 'px';
+                document.body.style.height = height + 'px';
+                document.body.style.overflow = 'hidden';
+                
+                // 触发resize事件
+                window.dispatchEvent(new Event('resize'));
+            }
+            
+            setTimeout(updateDisplayInfo, 200);
+        }
+        
+        // 测试屏幕方向
+        function testOrientation(orientation) {
+            const container = document.querySelector('.container');
+            
+            if (orientation === 'landscape') {
+                container.style.flexDirection = 'row';
+                container.style.alignItems = 'center';
+                document.body.style.height = '100vh';
+            } else {
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+                document.body.style.height = 'auto';
+            }
+            
+            // 触发resize事件
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                updateDisplayInfo();
+            }, 100);
+        }
+        
+        // 重置窗口
+        function resetWindow() {
+            document.body.style.width = '';
+            document.body.style.height = '';
+            document.body.style.overflow = '';
+            
+            const container = document.querySelector('.container');
+            container.style.flexDirection = '';
+            container.style.alignItems = '';
+            
+            window.dispatchEvent(new Event('resize'));
+            setTimeout(updateDisplayInfo, 100);
+        }
+        
+        // 切换性能监控
+        function togglePerformanceMonitor() {
+            const monitor = document.getElementById('performance-monitor');
+            const isVisible = monitor.style.display !== 'none';
+            
+            if (isVisible) {
+                monitor.style.display = 'none';
+                if (performanceMonitorInterval) {
+                    clearInterval(performanceMonitorInterval);
+                    performanceMonitorInterval = null;
+                }
+            } else {
+                monitor.style.display = 'block';
+                startPerformanceMonitoring();
+            }
+        }
+        
+        // 开始性能监控
+        function startPerformanceMonitoring() {
+            performanceMonitorInterval = setInterval(() => {
+                if (!game || !game.performanceMonitor) return;
+                
+                const fps = game.performanceMonitor.getFPS();
+                const frameTime = game.performanceMonitor.getAverageFrameTime();
+                const canvas = document.getElementById('physics-canvas');
+                const canvasDimensions = canvas ? `${canvas.clientWidth}x${canvas.clientHeight}` : '-';
+                
+                // 内存使用（如果支持）
+                let memoryInfo = '-';
+                if (performance.memory) {
+                    const used = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+                    const total = (performance.memory.totalJSHeapSize / 1024 / 1024).toFixed(1);
+                    memoryInfo = `${used}/${total}MB`;
+                }
+                
+                // 性能状态
+                let status = 'good';
+                let statusClass = 'performance-good';
+                if (fps < 30) {
+                    status = 'poor';
+                    statusClass = 'performance-error';
+                } else if (fps < 45) {
+                    status = 'fair';
+                    statusClass = 'performance-warning';
+                }
+                
+                document.getElementById('fps-display').textContent = fps;
+                document.getElementById('frame-time-display').textContent = frameTime.toFixed(2);
+                document.getElementById('canvas-dimensions').textContent = canvasDimensions;
+                document.getElementById('memory-usage').textContent = memoryInfo;
+                
+                const statusElement = document.getElementById('performance-status');
+                statusElement.textContent = status;
+                statusElement.className = statusClass;
+                
+            }, 1000);
+        }
+        
+        // 运行响应式测试
+        function runResponsiveTests() {
+            console.log('Running responsive tests...');
+            
+            const tests = [
+                { name: 'Mobile Portrait', width: 375, height: 667 },
+                { name: 'Mobile Landscape', width: 667, height: 375 },
+                { name: 'Tablet Portrait', width: 768, height: 1024 },
+                { name: 'Tablet Landscape', width: 1024, height: 768 },
+                { name: 'Desktop Small', width: 1200, height: 800 },
+                { name: 'Desktop Large', width: 1920, height: 1080 }
+            ];
+            
+            let testIndex = 0;
+            
+            function runNextTest() {
+                if (testIndex >= tests.length) {
+                    console.log('All responsive tests completed!');
+                    resetWindow();
+                    return;
+                }
+                
+                const test = tests[testIndex];
+                console.log(`Running test: ${test.name} (${test.width}x${test.height})`);
+                
+                // 模拟屏幕尺寸
+                document.body.style.width = test.width + 'px';
+                document.body.style.height = test.height + 'px';
+                window.dispatchEvent(new Event('resize'));
+                
+                // 等待渲染完成后检查结果
+                setTimeout(() => {
+                    const canvas = document.getElementById('physics-canvas');
+                    const scaleFactor = game && game.renderer ? game.renderer.getScaleFactor() : 1;
+                    
+                    console.log(`Test ${test.name} results:`, {
+                        canvasSize: canvas ? `${canvas.clientWidth}x${canvas.clientHeight}` : 'N/A',
+                        scaleFactor: scaleFactor,
+                        fps: game && game.performanceMonitor ? game.performanceMonitor.getFPS() : 'N/A'
+                    });
+                    
+                    testIndex++;
+                    setTimeout(runNextTest, 1000);
+                }, 500);
+            }
+            
+            runNextTest();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错误处理和性能监控测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .button-group {
+            margin: 10px 0;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        button.danger {
+            background: #f44336;
+        }
+        
+        button.danger:hover {
+            background: #d32f2f;
+        }
+        
+        button.warning {
+            background: #ff9800;
+        }
+        
+        button.warning:hover {
+            background: #f57c00;
+        }
+        
+        .log-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .stats-display {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .stats-display h4 {
+            margin-top: 0;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background: #4caf50; }
+        .status-warning { background: #ff9800; }
+        .status-critical { background: #f44336; }
+        
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>错误处理和性能监控测试</h1>
+        <p>这个页面用于测试游戏的错误处理和性能监控功能。</p>
+        
+        <!-- 基本测试 -->
+        <div class="test-section">
+            <h3>基本功能测试</h3>
+            <div class="button-group">
+                <button onclick="runAllTests()">运行所有测试</button>
+                <button onclick="testErrorHandler()">测试错误处理器</button>
+                <button onclick="testPerformanceMonitor()">测试性能监控</button>
+                <button onclick="clearLog()">清空日志</button>
+            </div>
+        </div>
+        
+        <!-- 错误模拟 -->
+        <div class="test-section">
+            <h3>错误模拟测试</h3>
+            <div class="button-group">
+                <button class="warning" onclick="simulateWarning()">模拟警告</button>
+                <button class="danger" onclick="simulateError()">模拟错误</button>
+                <button class="danger" onclick="simulateCriticalError()">模拟严重错误</button>
+                <button onclick="simulateMemoryLeak()">模拟内存泄漏</button>
+            </div>
+        </div>
+        
+        <!-- 性能测试 -->
+        <div class="test-section">
+            <h3>性能监控测试</h3>
+            <div class="button-group">
+                <button onclick="startPerformanceTest()">开始性能测试</button>
+                <button onclick="stopPerformanceTest()">停止性能测试</button>
+                <button onclick="simulateLowFPS()">模拟低FPS</button>
+                <button onclick="showPerformanceReport()">显示性能报告</button>
+            </div>
+            <canvas id="performance-canvas" width="400" height="200"></canvas>
+        </div>
+        
+        <!-- 渲染器测试 -->
+        <div class="test-section">
+            <h3>渲染器错误处理测试</h3>
+            <div class="button-group">
+                <button onclick="testRendererErrors()">测试渲染器错误</button>
+                <button onclick="testInvalidDrawing()">测试无效绘制</button>
+                <button onclick="showRendererStats()">显示渲染器统计</button>
+            </div>
+            <canvas id="renderer-test-canvas" width="300" height="200"></canvas>
+        </div>
+        
+        <!-- 状态显示 -->
+        <div class="test-section">
+            <h3>系统状态</h3>
+            <div class="stats-display" id="system-stats">
+                <h4>系统健康状态</h4>
+                <div id="health-status">检查中...</div>
+            </div>
+            <div class="stats-display" id="error-stats">
+                <h4>错误统计</h4>
+                <div id="error-summary">加载中...</div>
+            </div>
+            <div class="stats-display" id="performance-stats">
+                <h4>性能统计</h4>
+                <div id="performance-summary">加载中...</div>
+            </div>
+        </div>
+        
+        <!-- 日志输出 -->
+        <div class="test-section">
+            <h3>测试日志</h3>
+            <div class="log-output" id="log-output"></div>
+        </div>
+    </div>
+
+    <!-- 引入必要的脚本 -->
+    <script src="js/Vector2D.js"></script>
+    <script src="js/ErrorHandler.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="test/error-handling-test.js"></script>
+    
+    <script>
+        // 全局变量
+        let performanceTestInterval = null;
+        let testRenderer = null;
+        let performanceMonitor = null;
+        
+        // 重写console方法以显示在页面上
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error
+        };
+        
+        function logToPage(message, type = 'log') {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorMap = {
+                log: '#0f0',
+                warn: '#ff0',
+                error: '#f00'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = colorMap[type] || '#0f0';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logOutput.appendChild(logEntry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+            
+            // 调用原始console方法
+            originalConsole[type](message);
+        }
+        
+        // 重写console方法
+        console.log = (message, ...args) => {
+            logToPage(typeof message === 'string' ? message : JSON.stringify(message), 'log');
+            originalConsole.log(message, ...args);
+        };
+        
+        console.warn = (message, ...args) => {
+            logToPage(typeof message === 'string' ? message : JSON.stringify(message), 'warn');
+            originalConsole.warn(message, ...args);
+        };
+        
+        console.error = (message, ...args) => {
+            logToPage(typeof message === 'string' ? message : JSON.stringify(message), 'error');
+            originalConsole.error(message, ...args);
+        };
+        
+        // 测试函数
+        function runAllTests() {
+            console.log('开始运行所有测试...');
+            runErrorHandlingTests();
+        }
+        
+        function clearLog() {
+            document.getElementById('log-output').innerHTML = '';
+        }
+        
+        function simulateWarning() {
+            if (window.errorHandler) {
+                window.errorHandler.handleError({
+                    type: 'test',
+                    message: '这是一个测试警告',
+                    level: 'warn'
+                });
+            }
+        }
+        
+        function simulateError() {
+            if (window.errorHandler) {
+                window.errorHandler.handleError({
+                    type: 'test',
+                    message: '这是一个测试错误',
+                    level: 'error'
+                });
+            }
+        }
+        
+        function simulateCriticalError() {
+            if (window.errorHandler) {
+                window.errorHandler.handleError({
+                    type: 'test',
+                    message: '这是一个严重错误',
+                    level: 'critical'
+                });
+            }
+        }
+        
+        function simulateMemoryLeak() {
+            console.log('模拟内存泄漏...');
+            const leakyObjects = [];
+            for (let i = 0; i < 10000; i++) {
+                leakyObjects.push({
+                    data: new Array(1000).fill(Math.random()),
+                    timestamp: Date.now()
+                });
+            }
+            
+            // 故意不清理这些对象
+            console.log(`创建了 ${leakyObjects.length} 个对象`);
+        }
+        
+        function startPerformanceTest() {
+            if (performanceTestInterval) {
+                stopPerformanceTest();
+            }
+            
+            console.log('开始性能测试...');
+            performanceMonitor = new PerformanceMonitor();
+            
+            performanceTestInterval = setInterval(() => {
+                const now = performance.now();
+                performanceMonitor.update(now);
+                
+                // 模拟一些工作负载
+                const canvas = document.getElementById('performance-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制一些随机图形
+                for (let i = 0; i < 50; i++) {
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.random() * canvas.width,
+                        Math.random() * canvas.height,
+                        Math.random() * 20 + 5,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fillStyle = `hsl(${Math.random() * 360}, 50%, 50%)`;
+                    ctx.fill();
+                }
+                
+            }, 16); // ~60 FPS
+        }
+        
+        function stopPerformanceTest() {
+            if (performanceTestInterval) {
+                clearInterval(performanceTestInterval);
+                performanceTestInterval = null;
+                console.log('性能测试已停止');
+            }
+        }
+        
+        function simulateLowFPS() {
+            console.log('模拟低FPS场景...');
+            
+            // 创建一个消耗CPU的循环
+            const startTime = Date.now();
+            while (Date.now() - startTime < 100) {
+                // 消耗CPU时间
+                Math.random();
+            }
+        }
+        
+        function showPerformanceReport() {
+            if (performanceMonitor) {
+                const report = performanceMonitor.getPerformanceReport();
+                console.log('性能报告:', JSON.stringify(report, null, 2));
+            } else {
+                console.log('性能监控器未启动');
+            }
+        }
+        
+        function testRendererErrors() {
+            console.log('测试渲染器错误处理...');
+            
+            const canvas = document.getElementById('renderer-test-canvas');
+            testRenderer = new Renderer(canvas);
+            
+            // 测试正常绘制
+            testRenderer.drawCircle(50, 50, 20, '#ff0000');
+            
+            // 测试无效参数
+            testRenderer.drawCircle(NaN, 50, 20, '#00ff00');
+            testRenderer.drawCircle(50, Infinity, 20, '#0000ff');
+            
+            console.log('渲染器错误测试完成');
+        }
+        
+        function testInvalidDrawing() {
+            if (!testRenderer) {
+                console.log('请先运行渲染器错误测试');
+                return;
+            }
+            
+            console.log('测试无效绘制操作...');
+            
+            // 测试无效多边形
+            testRenderer.drawPolygon([]);
+            testRenderer.drawPolygon([{x: 10, y: 10}]);
+            testRenderer.drawPolygon([{x: NaN, y: 10}, {x: 20, y: 20}, {x: 30, y: 30}]);
+        }
+        
+        function showRendererStats() {
+            if (testRenderer) {
+                const stats = testRenderer.getErrorStats();
+                console.log('渲染器统计:', JSON.stringify(stats, null, 2));
+            } else {
+                console.log('渲染器未初始化');
+            }
+        }
+        
+        // 更新状态显示
+        function updateStatusDisplay() {
+            // 更新健康状态
+            if (window.errorHandler) {
+                const health = window.errorHandler.getHealthStatus();
+                const healthElement = document.getElementById('health-status');
+                
+                const statusClass = health.status === 'healthy' ? 'status-healthy' :
+                                  health.status === 'critical' ? 'status-critical' : 'status-warning';
+                
+                healthElement.innerHTML = `
+                    <span class="status-indicator ${statusClass}"></span>
+                    状态: ${health.status} (错误数: ${health.errorCount})
+                `;
+                
+                // 更新错误统计
+                const errorStats = window.errorHandler.getErrorStats();
+                document.getElementById('error-summary').innerHTML = `
+                    总错误数: ${errorStats.totalErrors}<br>
+                    严重错误: ${errorStats.criticalErrors}<br>
+                    最近错误: ${errorStats.recentErrors.length}
+                `;
+            }
+            
+            // 更新性能统计
+            if (performanceMonitor) {
+                const report = performanceMonitor.getPerformanceReport();
+                document.getElementById('performance-summary').innerHTML = `
+                    FPS: ${report.fps}<br>
+                    平均帧时间: ${report.averageFrameTime.toFixed(2)}ms<br>
+                    性能等级: ${report.performanceGrade}<br>
+                    掉帧率: ${(report.droppedFrameRate * 100).toFixed(2)}%
+                `;
+            }
+        }
+        
+        // 页面加载完成后的初始化
+        window.addEventListener('load', () => {
+            console.log('错误处理和性能监控测试页面已加载');
+            
+            // 定期更新状态显示
+            setInterval(updateStatusDisplay, 2000);
+            
+            // 初始更新
+            setTimeout(updateStatusDisplay, 1000);
+        });
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            stopPerformanceTest();
+            if (performanceMonitor) {
+                performanceMonitor.destroy();
+            }
+        });
+    </script>
+</body>
+</html>

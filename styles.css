@@ -1,0 +1,501 @@
+/* 基础样式重置和响应式布局 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 300;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+}
+
+/* Canvas容器样式 */
+.canvas-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Canvas样式 */
+#physics-canvas {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: #f5f5f5;
+    display: block;
+    max-width: 100%;
+    height: auto;
+    transition: all 0.3s ease;
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* 控制按钮样式 */
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.controls button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    min-width: 100px;
+}
+
+.controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #5a6fd8, #6a4190);
+}
+
+.controls button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.controls button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 响应式设计 */
+
+/* Large desktop screens */
+@media (min-width: 1200px) {
+    .canvas-container {
+        max-width: 1000px;
+    }
+    
+    #physics-canvas {
+        max-width: 800px;
+        max-height: 600px;
+    }
+}
+
+/* Desktop and laptop screens */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .canvas-container {
+        max-width: 900px;
+    }
+    
+    #physics-canvas {
+        max-width: 700px;
+        max-height: 525px;
+    }
+}
+
+/* Tablet screens */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 2.2rem;
+    }
+    
+    .canvas-container {
+        padding: 15px;
+        max-width: 700px;
+    }
+    
+    #physics-canvas {
+        max-width: 600px;
+        max-height: 450px;
+    }
+    
+    .controls {
+        gap: 12px;
+    }
+    
+    .controls button {
+        padding: 11px 22px;
+        font-size: 0.95rem;
+        min-width: 90px;
+    }
+}
+
+/* Small tablet and large phone screens */
+@media (min-width: 481px) and (max-width: 767px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .canvas-container {
+        padding: 15px;
+        margin: 0 10px;
+        max-width: 500px;
+    }
+    
+    #physics-canvas {
+        max-width: 450px;
+        max-height: 400px;
+    }
+    
+    .controls {
+        gap: 10px;
+    }
+    
+    .controls button {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        min-width: 80px;
+    }
+}
+
+/* Mobile phone screens */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .canvas-container {
+        padding: 10px;
+        margin: 0 5px;
+        border-radius: 10px;
+        max-width: 400px;
+    }
+    
+    #physics-canvas {
+        max-width: 350px;
+        max-height: 350px;
+        border-width: 1px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .controls button {
+        width: 100%;
+        max-width: 200px;
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 320px) {
+    .container {
+        padding: 8px;
+    }
+    
+    header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .canvas-container {
+        padding: 8px;
+        margin: 0 2px;
+        max-width: 300px;
+    }
+    
+    #physics-canvas {
+        max-width: 280px;
+        max-height: 280px;
+    }
+    
+    .controls button {
+        max-width: 180px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    body {
+        min-height: 100vh;
+    }
+    
+    .container {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+        gap: 15px;
+    }
+    
+    header {
+        margin-bottom: 0;
+        flex: 0 0 auto;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        margin: 0;
+    }
+    
+    .canvas-container {
+        flex: 1;
+        max-width: 60%;
+    }
+    
+    .controls {
+        flex-direction: column;
+        flex: 0 0 auto;
+        gap: 10px;
+    }
+    
+    .controls button {
+        min-width: 80px;
+        padding: 8px 16px;
+    }
+}
+
+/* 高DPI屏幕支持 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    #physics-canvas {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* 加载动画（为后续使用准备） */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 性能监控显示 */
+.performance-info {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    z-index: 1000;
+    display: none;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 1.4;
+}
+
+.performance-info.show {
+    display: block;
+    animation: fadeInRight 0.3s ease;
+}
+
+/* 帮助信息样式 */
+.help-info {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.help-info h3 {
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.help-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.help-item kbd {
+    background: #e9ecef;
+    border: 1px solid #adb5bd;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    margin-right: 8px;
+    min-width: 30px;
+    text-align: center;
+}
+
+/* 通知样式 */
+.notification {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 加载动画 */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 增强的按钮样式 */
+.controls button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.controls button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.controls button:hover::before {
+    left: 100%;
+}
+
+/* 键盘快捷键提示 */
+.controls button[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 移动设备优化 */
+@media (max-width: 480px) {
+    .help-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .help-item {
+        font-size: 0.85rem;
+    }
+    
+    .performance-info {
+        top: 5px;
+        right: 5px;
+        padding: 8px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}

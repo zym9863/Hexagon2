@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Test Suite - Rotating Hexagon Ball Physics</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #dee2e6;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .test-output {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        
+        .test-status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status-running {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .test-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .summary-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .canvas-container {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .test-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .test-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Comprehensive Test Suite</h1>
+            <p>Rotating Hexagon Ball Physics System - Requirements 6.1 & 6.4 Validation</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="runAllTests()">
+                    🚀 Run All Tests
+                </button>
+                <button class="btn btn-secondary" onclick="runPhysicsTests()">
+                    🧪 Physics Tests
+                </button>
+                <button class="btn btn-secondary" onclick="runCollisionTests()">
+                    🔄 Collision Tests
+                </button>
+                <button class="btn btn-secondary" onclick="runPerformanceTests()">
+                    ⚡ Performance Tests
+                </button>
+                <button class="btn btn-secondary" onclick="runCompatibilityTests()">
+                    🌐 Compatibility Tests
+                </button>
+                <button class="btn btn-secondary" onclick="clearOutput()">
+                    🗑️ Clear Output
+                </button>
+            </div>
+            
+            <div id="testStatus" class="test-status" style="display: none;">
+                <div id="statusText">Ready to run tests...</div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+            
+            <div id="testOutput" class="test-output">
+Welcome to the Comprehensive Test Suite!
+
+This test suite validates the Rotating Hexagon Ball Physics System against:
+• Requirement 6.1: Animation Performance (60 FPS target)
+• Requirement 6.4: System Optimization
+
+Available Test Categories:
+🧪 Physics Tests - Unit tests for physics engine components
+🔄 Collision Tests - Integration tests for collision detection
+⚡ Performance Tests - Benchmark tests for performance validation  
+🌐 Compatibility Tests - Cross-browser compatibility validation
+
+Click "Run All Tests" to start comprehensive testing...
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="testCanvas" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="test-summary">
+                <div class="summary-card">
+                    <h3>Total Tests</h3>
+                    <div class="number" id="totalTests">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Passed</h3>
+                    <div class="number" id="passedTests" style="color: #28a745;">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Failed</h3>
+                    <div class="number" id="failedTests" style="color: #dc3545;">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Success Rate</h3>
+                    <div class="number" id="successRate">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load core classes -->
+    <script src="js/Vector2D.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Game.js"></script>
+    
+    <!-- Load test suites -->
+    <script src="test/browser-compatibility-test.js"></script>
+    <script src="test/performance-benchmark.js"></script>
+    <script src="test/enhanced-comprehensive-test-suite.js"></script>  
+  
+    <script>
+        // Test execution state
+        let currentTestSuite = null;
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            categories: {}
+        };
+
+        // UI Elements
+        const testOutput = document.getElementById('testOutput');
+        const testStatus = document.getElementById('testStatus');
+        const statusText = document.getElementById('statusText');
+        const progressFill = document.getElementById('progressFill');
+        const totalTestsEl = document.getElementById('totalTests');
+        const passedTestsEl = document.getElementById('passedTests');
+        const failedTestsEl = document.getElementById('failedTests');
+        const successRateEl = document.getElementById('successRate');
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#f8f8f2',
+                success: '#50fa7b',
+                error: '#ff5555',
+                warning: '#f1fa8c',
+                cyan: '#8be9fd',
+                blue: '#6272a4'
+            };
+            
+            const color = colors[type] || colors.info;
+            testOutput.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span>\n`;
+            testOutput.scrollTop = testOutput.scrollHeight;
+        }
+
+        function updateStatus(text, type = 'running') {
+            testStatus.style.display = 'block';
+            statusText.textContent = text;
+            testStatus.className = `test-status status-${type}`;
+        }
+
+        function updateProgress(percentage) {
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        function updateSummary() {
+            totalTestsEl.textContent = testResults.total;
+            passedTestsEl.textContent = testResults.passed;
+            failedTestsEl.textContent = testResults.failed;
+            
+            const rate = testResults.total > 0 ? 
+                ((testResults.passed / testResults.total) * 100).toFixed(1) : 0;
+            successRateEl.textContent = `${rate}%`;
+        }
+
+        function clearOutput() {
+            testOutput.innerHTML = `Welcome to the Comprehensive Test Suite!
+
+This test suite validates the Rotating Hexagon Ball Physics System against:
+• Requirement 6.1: Animation Performance (60 FPS target)
+• Requirement 6.4: System Optimization
+
+Click any test button to start testing...
+`;
+            testStatus.style.display = 'none';
+            testResults = { total: 0, passed: 0, failed: 0, categories: {} };
+            updateSummary();
+            updateProgress(0);
+        }
+
+        // Test execution functions
+        async function runAllTests() {
+            log('🚀 Starting Comprehensive Test Suite...', 'cyan');
+            log('Testing Rotating Hexagon Ball Physics System', 'blue');
+            log('Requirements: 6.1 (Animation Performance), 6.4 (Optimization)', 'blue');
+            log('='.repeat(80), 'blue');
+            
+            updateStatus('Running comprehensive tests...', 'running');
+            
+            try {
+                // Reset results
+                testResults = { total: 0, passed: 0, failed: 0, categories: {} };
+                
+                // Run enhanced comprehensive test suite
+                if (typeof EnhancedComprehensiveTestSuite !== 'undefined') {
+                    const suite = new EnhancedComprehensiveTestSuite();
+                    await suite.runAllTests();
+                    
+                    // Process results
+                    const results = suite.getTestResults();
+                    processTestResults(results);
+                } else {
+                    // Fallback to individual test suites
+                    await runPhysicsTests();
+                    await runCollisionTests();
+                    await runPerformanceTests();
+                    await runCompatibilityTests();
+                }
+                
+                updateStatus('All tests completed!', 'success');
+                updateProgress(100);
+                
+            } catch (error) {
+                log(`❌ Test execution failed: ${error.message}`, 'error');
+                updateStatus('Test execution failed', 'error');
+            }
+        }
+
+        async function runPhysicsTests() {
+            log('\n🧪 Running Physics Engine Tests...', 'cyan');
+            updateStatus('Running physics tests...', 'running');
+            
+            try {
+                // Create simple physics tests
+                const tests = [
+                    testGravityApplication,
+                    testFrictionApplication,
+                    testVelocityIntegration,
+                    testForceAccumulation
+                ];
+                
+                let passed = 0;
+                for (let i = 0; i < tests.length; i++) {
+                    try {
+                        const result = tests[i]();
+                        log(`  ✓ ${result.name}`, 'success');
+                        passed++;
+                    } catch (error) {
+                        log(`  ❌ ${tests[i].name}: ${error.message}`, 'error');
+                    }
+                    updateProgress(((i + 1) / tests.length) * 100);
+                }
+                
+                testResults.total += tests.length;
+                testResults.passed += passed;
+                testResults.failed += (tests.length - passed);
+                updateSummary();
+                
+                log(`\n📊 Physics Tests: ${passed}/${tests.length} passed`, 'cyan');
+                
+            } catch (error) {
+                log(`❌ Physics tests failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runCollisionTests() {
+            log('\n🔄 Running Collision Detection Tests...', 'cyan');
+            updateStatus('Running collision tests...', 'running');
+            
+            try {
+                const tests = [
+                    testBasicCollision,
+                    testRotatingCollision,
+                    testCollisionNormals,
+                    testPenetrationCalculation
+                ];
+                
+                let passed = 0;
+                for (let i = 0; i < tests.length; i++) {
+                    try {
+                        const result = tests[i]();
+                        log(`  ✓ ${result.name}`, 'success');
+                        passed++;
+                    } catch (error) {
+                        log(`  ❌ ${tests[i].name}: ${error.message}`, 'error');
+                    }
+                    updateProgress(((i + 1) / tests.length) * 100);
+                }
+                
+                testResults.total += tests.length;
+                testResults.passed += passed;
+                testResults.failed += (tests.length - passed);
+                updateSummary();
+                
+                log(`\n📊 Collision Tests: ${passed}/${tests.length} passed`, 'cyan');
+                
+            } catch (error) {
+                log(`❌ Collision tests failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runPerformanceTests() {
+            log('\n⚡ Running Performance Benchmark Tests...', 'cyan');
+            updateStatus('Running performance tests...', 'running');
+            
+            try {
+                if (typeof PerformanceBenchmark !== 'undefined') {
+                    const benchmark = new PerformanceBenchmark();
+                    const results = await benchmark.runAllBenchmarks();
+                    
+                    let passed = 0;
+                    results.forEach(result => {
+                        if (result.passed) {
+                            log(`  ✓ ${result.name}: ${result.performance}`, 'success');
+                            passed++;
+                        } else {
+                            log(`  ❌ ${result.name}: ${result.error || 'Failed'}`, 'error');
+                        }
+                    });
+                    
+                    testResults.total += results.length;
+                    testResults.passed += passed;
+                    testResults.failed += (results.length - passed);
+                    updateSummary();
+                    
+                    log(`\n📊 Performance Tests: ${passed}/${results.length} passed`, 'cyan');
+                } else {
+                    log('⚠️ PerformanceBenchmark not available', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Performance tests failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function runCompatibilityTests() {
+            log('\n🌐 Running Cross-Browser Compatibility Tests...', 'cyan');
+            updateStatus('Running compatibility tests...', 'running');
+            
+            try {
+                if (typeof BrowserCompatibilityTest !== 'undefined') {
+                    const compatTest = new BrowserCompatibilityTest();
+                    const results = await compatTest.runAllTests();
+                    
+                    let passed = 0;
+                    results.forEach(result => {
+                        if (result.passed) {
+                            log(`  ✓ ${result.name}`, 'success');
+                            passed++;
+                        } else {
+                            log(`  ❌ ${result.name}: ${result.message || result.error}`, 'error');
+                        }
+                    });
+                    
+                    testResults.total += results.length;
+                    testResults.passed += passed;
+                    testResults.failed += (results.length - passed);
+                    updateSummary();
+                    
+                    log(`\n📊 Compatibility Tests: ${passed}/${results.length} passed`, 'cyan');
+                } else {
+                    log('⚠️ BrowserCompatibilityTest not available', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Compatibility tests failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Individual test functions
+        function testGravityApplication() {
+            const ball = new Ball(0, 0, 10, 1);
+            const physics = new PhysicsEngine({ gravity: 9.81, friction: 1.0 });
+            
+            const initialVelocity = ball.velocity.y;
+            physics.applyGravity(ball, 0.016);
+            
+            if (ball.velocity.y <= initialVelocity) {
+                throw new Error('Gravity should increase downward velocity');
+            }
+            
+            return { name: 'Gravity Application Test' };
+        }
+
+        function testFrictionApplication() {
+            const ball = new Ball(0, 0, 10, 1);
+            ball.setVelocity(100, 50);
+            
+            const physics = new PhysicsEngine({ friction: 0.9 });
+            const initialSpeed = ball.velocity.magnitude();
+            
+            physics.applyFriction(ball);
+            
+            if (ball.velocity.magnitude() >= initialSpeed) {
+                throw new Error('Friction should reduce speed');
+            }
+            
+            return { name: 'Friction Application Test' };
+        }
+
+        function testVelocityIntegration() {
+            const ball = new Ball(0, 0, 10, 1);
+            ball.setVelocity(50, 30);
+            
+            const initialPosition = ball.position.clone();
+            ball.update(0.016);
+            
+            const expectedX = initialPosition.x + 50 * 0.016;
+            const expectedY = initialPosition.y + 30 * 0.016;
+            
+            if (Math.abs(ball.position.x - expectedX) > 0.001 || 
+                Math.abs(ball.position.y - expectedY) > 0.001) {
+                throw new Error('Velocity integration incorrect');
+            }
+            
+            return { name: 'Velocity Integration Test' };
+        }
+
+        function testForceAccumulation() {
+            const ball = new Ball(0, 0, 10, 1);
+            
+            const force1 = new Vector2D(10, 0);
+            const force2 = new Vector2D(0, 15);
+            
+            ball.applyForce(force1);
+            ball.applyForce(force2);
+            
+            if (Math.abs(ball.acceleration.x - 10) > 0.001 || 
+                Math.abs(ball.acceleration.y - 15) > 0.001) {
+                throw new Error('Force accumulation incorrect');
+            }
+            
+            return { name: 'Force Accumulation Test' };
+        }
+
+        function testBasicCollision() {
+            const hexagon = new Hexagon(0, 0, 100);
+            const ball = new Ball(90, 0, 15, 1);
+            
+            const collision = hexagon.checkCollision(ball);
+            
+            if (!collision) {
+                throw new Error('Expected collision not detected');
+            }
+            
+            if (collision.penetration <= 0) {
+                throw new Error('Collision penetration should be positive');
+            }
+            
+            return { name: 'Basic Collision Detection Test' };
+        }
+
+        function testRotatingCollision() {
+            const hexagon = new Hexagon(0, 0, 100);
+            const ball = new Ball(90, 0, 15, 1);
+            
+            const collision1 = hexagon.checkCollision(ball);
+            
+            hexagon.rotate(Math.PI / 6);
+            const collision2 = hexagon.checkCollision(ball);
+            
+            if (collision1 && collision2) {
+                const normalDiff = collision1.normal.subtract(collision2.normal).magnitude();
+                if (normalDiff < 0.1) {
+                    throw new Error('Rotation should affect collision normal');
+                }
+            }
+            
+            return { name: 'Rotating Collision Test' };
+        }
+
+        function testCollisionNormals() {
+            const hexagon = new Hexagon(0, 0, 100);
+            const ball = new Ball(95, 0, 10, 1);
+            
+            const collision = hexagon.checkCollision(ball);
+            
+            if (!collision) {
+                throw new Error('Expected collision not detected');
+            }
+            
+            if (Math.abs(collision.normal.magnitude() - 1) > 0.001) {
+                throw new Error('Collision normal should be unit vector');
+            }
+            
+            return { name: 'Collision Normal Test' };
+        }
+
+        function testPenetrationCalculation() {
+            const hexagon = new Hexagon(0, 0, 100);
+            const ball = new Ball(95, 0, 10, 1);
+            
+            const collision = hexagon.checkCollision(ball);
+            
+            if (!collision) {
+                throw new Error('Expected collision not detected');
+            }
+            
+            if (collision.penetration <= 0 || collision.penetration > ball.radius) {
+                throw new Error('Penetration calculation incorrect');
+            }
+            
+            return { name: 'Penetration Calculation Test' };
+        }
+
+        function processTestResults(results) {
+            if (results && results.testResults) {
+                Object.values(results.testResults).forEach(category => {
+                    if (Array.isArray(category)) {
+                        category.forEach(test => {
+                            testResults.total++;
+                            if (test.passed) {
+                                testResults.passed++;
+                            } else {
+                                testResults.failed++;
+                            }
+                        });
+                    }
+                });
+                updateSummary();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🧪 Comprehensive Test Suite Initialized', 'success');
+            log('Ready to test Rotating Hexagon Ball Physics System', 'info');
+            updateSummary();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysicsEngine Tests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-results {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        .demo-canvas {
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>PhysicsEngine 测试套件</h1>
+        <p>这个页面测试PhysicsEngine类的所有功能，包括重力、摩擦力和物理更新循环。</p>
+        
+        <button onclick="runAllTests()">运行所有测试</button>
+        <button onclick="runPhysicsDemo()">运行物理演示</button>
+        <button onclick="clearResults()">清除结果</button>
+        
+        <div id="testResults" class="test-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>物理演示</h2>
+        <canvas id="demoCanvas" class="demo-canvas" width="600" height="400"></canvas>
+        <div id="demoInfo" class="test-results"></div>
+    </div>
+
+    <!-- 加载依赖的类 -->
+    <script src="js/Vector2D.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+
+    <script>
+        // 全局测试状态
+        let testOutput = '';
+        let testsPassed = 0;
+        let testsTotal = 0;
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            testOutput += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            updateTestResults();
+        }
+
+        function updateTestResults() {
+            document.getElementById('testResults').innerHTML = testOutput;
+            document.getElementById('testResults').scrollTop = document.getElementById('testResults').scrollHeight;
+        }
+
+        function clearResults() {
+            testOutput = '';
+            testsPassed = 0;
+            testsTotal = 0;
+            updateTestResults();
+        }
+
+        // 断言函数
+        function assert(condition, message) {
+            testsTotal++;
+            if (condition) {
+                testsPassed++;
+                log(`✓ ${message}`, 'success');
+            } else {
+                log(`✗ ${message}`, 'error');
+                throw new Error(`Assertion failed: ${message}`);
+            }
+        }
+
+        // 测试套件：PhysicsEngine 基础功能
+        function testPhysicsEngineBasics() {
+            log('Testing PhysicsEngine basics...');
+            
+            // 测试构造函数
+            const engine = new PhysicsEngine();
+            
+            // 验证默认配置
+            assert(engine.config.gravity > 0, 'Gravity should be positive');
+            assert(engine.config.frictionCoefficient > 0 && engine.config.frictionCoefficient <= 1, 
+                   'Friction coefficient should be between 0 and 1');
+            assert(engine.config.restitution > 0 && engine.config.restitution <= 1, 
+                   'Restitution should be between 0 and 1');
+            
+            // 测试自定义配置
+            const customEngine = new PhysicsEngine({
+                gravity: 100,
+                frictionCoefficient: 0.5,
+                restitution: 0.9
+            });
+            
+            assert(customEngine.config.gravity === 100, 'Custom gravity should be set');
+            assert(customEngine.config.frictionCoefficient === 0.5, 'Custom friction should be set');
+            assert(customEngine.config.restitution === 0.9, 'Custom restitution should be set');
+        }
+
+        // 测试套件：重力应用
+        function testGravityApplication() {
+            log('Testing gravity application...');
+            
+            const engine = new PhysicsEngine({ gravity: 100 });
+            const ball = new Ball(0, 0, 10, 1);
+            
+            // 记录初始状态
+            const initialVelocity = ball.velocity.clone();
+            
+            // 应用重力
+            engine.applyGravity(ball, 0.016); // 60 FPS
+            
+            // 验证重力效果
+            assert(ball.acceleration.y > 0, 'Gravity should create downward acceleration');
+            assert(ball.acceleration.x === 0, 'Gravity should not affect horizontal acceleration');
+            
+            // 更新小球状态
+            ball.update(0.016);
+            
+            // 验证速度变化
+            assert(ball.velocity.y > initialVelocity.y, 'Velocity should increase due to gravity');
+            
+            // 测试多次重力应用
+            const initialY = ball.velocity.y;
+            engine.applyGravity(ball, 0.016);
+            ball.update(0.016);
+            
+            assert(ball.velocity.y > initialY, 'Gravity should continue to accelerate ball');
+        }
+
+        // 测试套件：摩擦力应用
+        function testFrictionApplication() {
+            log('Testing friction application...');
+            
+            const engine = new PhysicsEngine({ frictionCoefficient: 0.9 });
+            const ball = new Ball(0, 0, 10, 1);
+            
+            // 设置初始速度
+            ball.setVelocity(100, 50);
+            const initialSpeed = ball.velocity.magnitude();
+            
+            // 应用摩擦力
+            engine.applyFriction(ball);
+            
+            // 验证摩擦力效果
+            const newSpeed = ball.velocity.magnitude();
+            assert(newSpeed < initialSpeed, 'Friction should reduce speed');
+            assert(Math.abs(newSpeed - initialSpeed * 0.9) < 0.001, 'Friction should reduce speed by friction coefficient');
+            
+            // 测试低速度阈值
+            ball.setVelocity(0.05, 0.05); // 低于默认阈值 0.1
+            engine.applyFriction(ball);
+            
+            assert(ball.velocity.magnitude() === 0, 'Low velocity should be set to zero');
+        }
+
+        // 测试套件：物理更新循环
+        function testPhysicsUpdate() {
+            log('Testing physics update loop...');
+            
+            const engine = new PhysicsEngine({
+                gravity: 100,
+                frictionCoefficient: 0.98
+            });
+            const ball = new Ball(0, 0, 10, 1);
+            
+            // 记录初始状态
+            const initialPosition = ball.position.clone();
+            const initialVelocity = ball.velocity.clone();
+            
+            // 执行物理更新
+            engine.update(ball, null, 0.016);
+            
+            // 验证位置和速度变化
+            assert(ball.position.y > initialPosition.y, 'Ball should move down due to gravity');
+            assert(ball.velocity.y > initialVelocity.y, 'Ball should accelerate down due to gravity');
+            
+            // 测试多次更新
+            const positionAfterFirst = ball.position.clone();
+            engine.update(ball, null, 0.016);
+            
+            assert(ball.position.y > positionAfterFirst.y, 'Ball should continue moving');
+        }
+
+        // 测试套件：参数管理
+        function testParameterManagement() {
+            log('Testing parameter management...');
+            
+            const engine = new PhysicsEngine();
+            
+            // 测试参数设置
+            engine.setParameter('gravity', 200);
+            assert(engine.getParameter('gravity') === 200, 'Parameter should be updated');
+            
+            engine.setParameter('frictionCoefficient', 0.5);
+            assert(engine.getParameter('frictionCoefficient') === 0.5, 'Friction parameter should be updated');
+        }
+
+        // 测试套件：能量计算
+        function testEnergyCalculation() {
+            log('Testing energy calculation...');
+            
+            const engine = new PhysicsEngine({ gravity: 9.81 * 50 });
+            const ball = new Ball(0, 0, 10, 1);
+            
+            // 测试静止状态的能量
+            const restEnergy = engine.calculateTotalEnergy(ball, 0);
+            assert(restEnergy === 0, 'Ball at rest at reference height should have zero energy');
+            
+            // 测试有速度的能量
+            ball.setVelocity(10, 0);
+            const kineticEnergy = engine.calculateTotalEnergy(ball, 0);
+            assert(kineticEnergy > 0, 'Moving ball should have positive kinetic energy');
+            
+            // 测试势能
+            ball.setVelocity(0, 0);
+            ball.setPosition(0, -100); // 高于参考点
+            const potentialEnergy = engine.calculateTotalEnergy(ball, 0);
+            assert(potentialEnergy > 0, 'Ball above reference should have positive potential energy');
+        }
+
+        // 测试套件：冲量应用
+        function testImpulseApplication() {
+            log('Testing impulse application...');
+            
+            const engine = new PhysicsEngine();
+            const ball = new Ball(0, 0, 10, 1);
+            
+            // 应用冲量
+            const impulse = new Vector2D(10, -5);
+            const initialVelocity = ball.velocity.clone();
+            
+            engine.applyImpulse(ball, impulse);
+            
+            // 验证速度变化
+            const expectedVelocity = initialVelocity.add(impulse.multiply(1 / ball.mass));
+            assert(Math.abs(ball.velocity.x - expectedVelocity.x) < 0.001, 'Impulse should change velocity correctly');
+            assert(Math.abs(ball.velocity.y - expectedVelocity.y) < 0.001, 'Impulse should change velocity correctly');
+        }
+
+        // 测试套件：静态工厂方法
+        function testStaticFactoryMethods() {
+            log('Testing static factory methods...');
+            
+            // 测试默认配置
+            const defaultEngine = PhysicsEngine.createDefault();
+            assert(defaultEngine instanceof PhysicsEngine, 'Should create PhysicsEngine instance');
+            assert(defaultEngine.config.gravity > 0, 'Default engine should have gravity');
+            
+            // 测试高摩擦配置
+            const highFrictionEngine = PhysicsEngine.createHighFriction();
+            assert(highFrictionEngine.config.frictionCoefficient < defaultEngine.config.frictionCoefficient,
+                   'High friction engine should have lower friction coefficient');
+            
+            // 测试低重力配置
+            const lowGravityEngine = PhysicsEngine.createLowGravity();
+            assert(lowGravityEngine.config.gravity < defaultEngine.config.gravity,
+                   'Low gravity engine should have lower gravity');
+        }
+
+        // 运行所有测试
+        function runAllTests() {
+            clearResults();
+            log('Starting PhysicsEngine tests...');
+            
+            try {
+                testPhysicsEngineBasics();
+                testGravityApplication();
+                testFrictionApplication();
+                testPhysicsUpdate();
+                testParameterManagement();
+                testEnergyCalculation();
+                testImpulseApplication();
+                testStaticFactoryMethods();
+                
+                log(`\n✅ All tests passed! (${testsPassed}/${testsTotal})`, 'success');
+            } catch (error) {
+                log(`\n❌ Test failed: ${error.message}`, 'error');
+                log(`Tests passed: ${testsPassed}/${testsTotal}`, 'info');
+            }
+        }
+
+        // 物理演示
+        function runPhysicsDemo() {
+            const canvas = document.getElementById('demoCanvas');
+            const ctx = canvas.getContext('2d');
+            const infoDiv = document.getElementById('demoInfo');
+            
+            // 创建物理引擎和小球
+            const engine = new PhysicsEngine({
+                gravity: 200,
+                frictionCoefficient: 0.99,
+                restitution: 0.8
+            });
+            
+            const balls = [
+                new Ball(150, 50, 8, 1),
+                new Ball(300, 100, 12, 1.5),
+                new Ball(450, 75, 10, 1.2)
+            ];
+            
+            // 设置初始速度
+            balls[0].setVelocity(50, 0);
+            balls[1].setVelocity(-30, 20);
+            balls[2].setVelocity(0, 50);
+            
+            let frameCount = 0;
+            let lastTime = 0;
+            
+            function animate(currentTime) {
+                const deltaTime = (currentTime - lastTime) / 1000;
+                lastTime = currentTime;
+                
+                if (deltaTime > 0 && deltaTime < 0.1) { // 限制最大时间步长
+                    // 清除画布
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 更新和绘制小球
+                    balls.forEach((ball, index) => {
+                        // 更新物理
+                        engine.update(ball, null, deltaTime);
+                        
+                        // 简单的边界反弹
+                        if (ball.position.x <= ball.radius || ball.position.x >= canvas.width - ball.radius) {
+                            ball.velocity.x *= -engine.config.restitution;
+                            ball.position.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.position.x));
+                        }
+                        
+                        if (ball.position.y <= ball.radius || ball.position.y >= canvas.height - ball.radius) {
+                            ball.velocity.y *= -engine.config.restitution;
+                            ball.position.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.position.y));
+                        }
+                        
+                        // 绘制小球
+                        ctx.beginPath();
+                        ctx.arc(ball.position.x, ball.position.y, ball.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = ['#FF5722', '#2196F3', '#4CAF50'][index];
+                        ctx.fill();
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        // 绘制速度向量
+                        const scale = 0.5;
+                        const endX = ball.position.x + ball.velocity.x * scale;
+                        const endY = ball.position.y + ball.velocity.y * scale;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(ball.position.x, ball.position.y);
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = '#666';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    });
+                    
+                    frameCount++;
+                    
+                    // 更新信息显示
+                    if (frameCount % 60 === 0) {
+                        let info = `Frame: ${frameCount}\n`;
+                        info += `Physics Engine Config:\n`;
+                        info += `  Gravity: ${engine.config.gravity}\n`;
+                        info += `  Friction: ${engine.config.frictionCoefficient}\n`;
+                        info += `  Restitution: ${engine.config.restitution}\n\n`;
+                        
+                        balls.forEach((ball, index) => {
+                            info += `Ball ${index + 1}:\n`;
+                            info += `  Position: (${ball.position.x.toFixed(1)}, ${ball.position.y.toFixed(1)})\n`;
+                            info += `  Velocity: (${ball.velocity.x.toFixed(1)}, ${ball.velocity.y.toFixed(1)})\n`;
+                            info += `  Speed: ${ball.velocity.magnitude().toFixed(1)}\n`;
+                            info += `  Energy: ${engine.calculateTotalEnergy(ball, canvas.height).toFixed(1)}\n\n`;
+                        });
+                        
+                        infoDiv.textContent = info;
+                    }
+                }
+                
+                if (frameCount < 3600) { // 运行60秒
+                    requestAnimationFrame(animate);
+                } else {
+                    infoDiv.textContent += '\n演示结束';
+                }
+            }
+            
+            infoDiv.textContent = '物理演示开始...\n';
+            requestAnimationFrame(animate);
+        }
+
+        // 页面加载完成后的初始化
+        window.addEventListener('load', function() {
+            log('PhysicsEngine test page loaded', 'info');
+            log('Click "运行所有测试" to start testing', 'info');
+        });
+    </script>
+</body>
+</html>

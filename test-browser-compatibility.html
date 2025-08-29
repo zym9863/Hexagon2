@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨浏览器兼容性测试 - Browser Compatibility Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3, #21CBF3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .environment-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .environment-info h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .info-item strong {
+            display: block;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #FF5722, #FF7043);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .test-output {
+            padding: 30px;
+            min-height: 400px;
+        }
+
+        .compatibility-score {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+        }
+
+        .score-excellent {
+            background: #e8f5e8;
+            border: 2px solid #4CAF50;
+            color: #2e7d32;
+        }
+
+        .score-good {
+            background: #fff3e0;
+            border: 2px solid #FF9800;
+            color: #ef6c00;
+        }
+
+        .score-poor {
+            background: #ffeaea;
+            border: 2px solid #F44336;
+            color: #c62828;
+        }
+
+        .test-category {
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.2em;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .category-content {
+            padding: 20px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .test-status {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .test-status.passed {
+            background: #4CAF50;
+        }
+
+        .test-status.failed {
+            background: #F44336;
+        }
+
+        .test-details {
+            flex: 1;
+        }
+
+        .test-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .test-message {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .test-info {
+            color: #888;
+            font-size: 0.85em;
+            font-family: monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .log-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .recommendations {
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .recommendations h4 {
+            margin: 0 0 15px 0;
+            color: #1976d2;
+        }
+
+        .recommendations ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .recommendations li {
+            margin-bottom: 8px;
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                display: block;
+                margin: 10px auto;
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 跨浏览器兼容性测试</h1>
+            <p>Browser Compatibility Test for Rotating Hexagon Ball Physics</p>
+        </div>
+
+        <div class="environment-info">
+            <h3>📱 环境信息 Environment Information</h3>
+            <div class="info-grid" id="environmentInfo">
+                <!-- 环境信息将在这里动态填充 -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="runCompatibilityTest" class="btn">🚀 运行兼容性测试</button>
+            <button id="showLog" class="btn" style="background: linear-gradient(135deg, #607D8B, #78909C);">📋 显示日志</button>
+            <button id="clearResults" class="btn" style="background: linear-gradient(135deg, #9E9E9E, #BDBDBD);">🗑️ 清除结果</button>
+        </div>
+
+        <div class="test-output">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div id="compatibilityScore" class="compatibility-score" style="display: none;">
+                <!-- 兼容性评分将在这里显示 -->
+            </div>
+
+            <div id="testResults">
+                <!-- 测试结果将在这里显示 -->
+            </div>
+
+            <div id="recommendations" class="recommendations" style="display: none;">
+                <h4>💡 兼容性建议 Compatibility Recommendations</h4>
+                <ul id="recommendationsList">
+                    <!-- 建议将在这里显示 -->
+                </ul>
+            </div>
+
+            <div class="log-output" id="logOutput"></div>
+        </div>
+    </div>
+
+    <!-- 加载兼容性测试 -->
+    <script src="test/browser-compatibility-test.js"></script>
+
+    <script>
+        class CompatibilityTestUI {
+            constructor() {
+                this.compatibilityTest = new BrowserCompatibilityTest();
+                this.isRunning = false;
+                this.setupEventListeners();
+                this.setupConsoleCapture();
+                this.displayEnvironmentInfo();
+            }
+
+            setupEventListeners() {
+                document.getElementById('runCompatibilityTest').addEventListener('click', () => this.runCompatibilityTest());
+                document.getElementById('showLog').addEventListener('click', () => this.toggleLog());
+                document.getElementById('clearResults').addEventListener('click', () => this.clearResults());
+            }
+
+            setupConsoleCapture() {
+                const logOutput = document.getElementById('logOutput');
+                const originalLog = console.log;
+                const originalError = console.error;
+
+                console.log = (...args) => {
+                    originalLog.apply(console, args);
+                    logOutput.textContent += args.join(' ') + '\n';
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                };
+
+                console.error = (...args) => {
+                    originalError.apply(console, args);
+                    logOutput.textContent += 'ERROR: ' + args.join(' ') + '\n';
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                };
+            }
+
+            displayEnvironmentInfo() {
+                const info = this.compatibilityTest.browserInfo;
+                const device = this.compatibilityTest.deviceInfo;
+                const container = document.getElementById('environmentInfo');
+
+                const infoItems = [
+                    { label: '浏览器 Browser', value: `${info.name} ${info.version}` },
+                    { label: '引擎 Engine', value: info.engine },
+                    { label: '平台 Platform', value: device.platform },
+                    { label: '语言 Language', value: device.language },
+                    { label: '屏幕 Screen', value: `${device.screen.width}x${device.screen.height}` },
+                    { label: '视口 Viewport', value: `${device.viewport.width}x${device.viewport.height}` },
+                    { label: 'DPR', value: device.viewport.devicePixelRatio },
+                    { label: 'CPU 核心 Cores', value: device.hardwareConcurrency },
+                    { label: '内存 Memory', value: `${device.deviceMemory}GB` },
+                    { label: '在线状态 Online', value: device.onLine ? '是 Yes' : '否 No' }
+                ];
+
+                container.innerHTML = infoItems.map(item => `
+                    <div class="info-item">
+                        <strong>${item.label}</strong>
+                        ${item.value}
+                    </div>
+                `).join('');
+            }
+
+            async runCompatibilityTest() {
+                if (this.isRunning) return;
+
+                this.isRunning = true;
+                this.setButtonsDisabled(true);
+                this.clearResults();
+                this.showLog();
+
+                try {
+                    const results = await this.compatibilityTest.runAllTests();
+                    this.displayResults(results);
+                } catch (error) {
+                    console.error('Compatibility test execution failed:', error);
+                } finally {
+                    this.isRunning = false;
+                    this.setButtonsDisabled(false);
+                }
+            }
+
+            displayResults(results) {
+                const passedTests = results.filter(r => r.passed).length;
+                const totalTests = results.length;
+                const compatibilityScore = ((passedTests / totalTests) * 100).toFixed(1);
+
+                // 显示兼容性评分
+                this.displayCompatibilityScore(compatibilityScore, passedTests, totalTests);
+
+                // 按类别分组显示结果
+                this.displayTestsByCategory(results);
+
+                // 显示建议
+                this.displayRecommendations(results, compatibilityScore);
+
+                // 更新进度条
+                this.updateProgress(passedTests, totalTests);
+            }
+
+            displayCompatibilityScore(score, passed, total) {
+                const scoreElement = document.getElementById('compatibilityScore');
+                let scoreClass = 'score-poor';
+                let scoreIcon = '❌';
+                let scoreText = '兼容性较差 Poor Compatibility';
+
+                if (score >= 90) {
+                    scoreClass = 'score-excellent';
+                    scoreIcon = '🎉';
+                    scoreText = '兼容性优秀 Excellent Compatibility';
+                } else if (score >= 75) {
+                    scoreClass = 'score-good';
+                    scoreIcon = '✅';
+                    scoreText = '兼容性良好 Good Compatibility';
+                }
+
+                scoreElement.className = `compatibility-score ${scoreClass}`;
+                scoreElement.innerHTML = `
+                    <div style="font-size: 2em; margin-bottom: 10px;">${scoreIcon}</div>
+                    <div><strong>兼容性评分 Compatibility Score: ${score}%</strong></div>
+                    <div>${passed}/${total} 测试通过 tests passed</div>
+                    <div style="margin-top: 10px; font-size: 0.9em;">${scoreText}</div>
+                `;
+                scoreElement.style.display = 'block';
+            }
+
+            displayTestsByCategory(results) {
+                const categories = {
+                    '核心功能 Core Features': [
+                        'HTML5 Canvas Support', 
+                        'Canvas 2D Context Features', 
+                        'RequestAnimationFrame Support'
+                    ],
+                    'JavaScript 支持 JavaScript Support': [
+                        'ES6+ Features Support', 
+                        'Math Functions Accuracy', 
+                        'Performance API Support'
+                    ],
+                    '设备功能 Device Features': [
+                        'High DPI Display Support', 
+                        'Touch Events Support', 
+                        'Viewport Meta Tag Support'
+                    ],
+                    '存储和事件 Storage & Events': [
+                        'Local Storage Support', 
+                        'Event Handling Support'
+                    ],
+                    '图形功能 Graphics': [
+                        'WebGL Support'
+                    ]
+                };
+
+                const container = document.getElementById('testResults');
+                container.innerHTML = '';
+
+                Object.entries(categories).forEach(([categoryName, testNames]) => {
+                    const categoryTests = testNames.map(name => 
+                        results.find(r => r.name === name)
+                    ).filter(Boolean);
+
+                    if (categoryTests.length === 0) return;
+
+                    const categoryElement = document.createElement('div');
+                    categoryElement.className = 'test-category';
+
+                    const passedInCategory = categoryTests.filter(t => t.passed).length;
+                    const totalInCategory = categoryTests.length;
+
+                    categoryElement.innerHTML = `
+                        <div class="category-header">
+                            ${categoryName} (${passedInCategory}/${totalInCategory})
+                        </div>
+                        <div class="category-content">
+                            ${categoryTests.map(test => `
+                                <div class="test-item">
+                                    <div class="test-status ${test.passed ? 'passed' : 'failed'}">
+                                        ${test.passed ? '✓' : '✗'}
+                                    </div>
+                                    <div class="test-details">
+                                        <div class="test-name">${test.name}</div>
+                                        <div class="test-message">${test.message || ''}</div>
+                                        ${test.details ? `<div class="test-info">${test.details}</div>` : ''}
+                                        ${test.error ? `<div class="test-info" style="color: #f44336;">Error: ${test.error}</div>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                    container.appendChild(categoryElement);
+                });
+            }
+
+            displayRecommendations(results, score) {
+                const recommendationsElement = document.getElementById('recommendations');
+                const listElement = document.getElementById('recommendationsList');
+                
+                const recommendations = [];
+
+                if (score >= 90) {
+                    recommendations.push('🎉 浏览器兼容性优秀！所有主要功能都得到支持。Excellent browser compatibility! All major features supported.');
+                } else if (score >= 75) {
+                    recommendations.push('✅ 兼容性良好，有少量限制。Good compatibility with minor limitations.');
+                } else if (score >= 50) {
+                    recommendations.push('⚠️ 兼容性中等，某些功能可能无法正常工作。Moderate compatibility. Some features may not work optimally.');
+                } else {
+                    recommendations.push('❌ 兼容性较差，建议使用现代浏览器。Poor compatibility. Consider using a modern browser.');
+                }
+
+                // 针对失败的测试给出具体建议
+                const failedTests = results.filter(r => !r.passed);
+                if (failedTests.some(t => t.name.includes('Canvas'))) {
+                    recommendations.push('🎨 Canvas 功能受限，可能影响图形渲染性能。Canvas features limited, may affect graphics rendering.');
+                }
+                if (failedTests.some(t => t.name.includes('ES6'))) {
+                    recommendations.push('📜 JavaScript ES6+ 功能不完整，建议更新浏览器。Incomplete ES6+ support, consider updating browser.');
+                }
+                if (failedTests.some(t => t.name.includes('Performance'))) {
+                    recommendations.push('⚡ 性能 API 受限，可能无法进行性能监控。Performance API limited, monitoring may not work.');
+                }
+                if (failedTests.some(t => t.name.includes('Touch'))) {
+                    recommendations.push('👆 触摸事件支持有限，移动设备体验可能受影响。Limited touch support, mobile experience may be affected.');
+                }
+
+                listElement.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
+                recommendationsElement.style.display = 'block';
+            }
+
+            updateProgress(passed, total) {
+                const progressFill = document.getElementById('progressFill');
+                const percentage = total > 0 ? (passed / total * 100) : 0;
+                progressFill.style.width = percentage + '%';
+            }
+
+            toggleLog() {
+                const logOutput = document.getElementById('logOutput');
+                const showLogBtn = document.getElementById('showLog');
+                
+                if (logOutput.style.display === 'none' || !logOutput.style.display) {
+                    logOutput.style.display = 'block';
+                    showLogBtn.textContent = '📋 隐藏日志 Hide Log';
+                } else {
+                    logOutput.style.display = 'none';
+                    showLogBtn.textContent = '📋 显示日志 Show Log';
+                }
+            }
+
+            showLog() {
+                const logOutput = document.getElementById('logOutput');
+                const showLogBtn = document.getElementById('showLog');
+                logOutput.style.display = 'block';
+                showLogBtn.textContent = '📋 隐藏日志 Hide Log';
+            }
+
+            clearResults() {
+                document.getElementById('logOutput').textContent = '';
+                document.getElementById('testResults').innerHTML = '';
+                document.getElementById('compatibilityScore').style.display = 'none';
+                document.getElementById('recommendations').style.display = 'none';
+                document.getElementById('progressFill').style.width = '0%';
+                
+                // 重新创建测试实例
+                this.compatibilityTest = new BrowserCompatibilityTest();
+            }
+
+            setButtonsDisabled(disabled) {
+                const buttons = document.querySelectorAll('.btn');
+                buttons.forEach(btn => btn.disabled = disabled);
+            }
+        }
+
+        // 初始化兼容性测试UI
+        document.addEventListener('DOMContentLoaded', () => {
+            new CompatibilityTestUI();
+        });
+    </script>
+</body>
+</html>

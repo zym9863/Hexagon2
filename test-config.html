@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置系统测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .config-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .config-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select, button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .preset-buttons button {
+            background: #4CAF50;
+        }
+        .preset-buttons button:hover {
+            background: #45a049;
+        }
+        #config-output {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>配置系统测试</h1>
+    
+    <div class="config-section">
+        <h2>物理模拟</h2>
+        <div class="canvas-container">
+            <canvas id="physics-canvas" width="600" height="400"></canvas>
+        </div>
+        <div class="controls">
+            <button id="reset-btn">重置</button>
+            <button id="pause-btn">暂停</button>
+        </div>
+    </div>
+    
+    <div class="config-section">
+        <h2>预设配置</h2>
+        <div class="preset-buttons">
+            <button onclick="applyPreset('default')">默认</button>
+            <button onclick="applyPreset('bouncy')">高弹性</button>
+            <button onclick="applyPreset('sticky')">高摩擦</button>
+            <button onclick="applyPreset('space')">低重力</button>
+            <button onclick="applyPreset('spinner')">快速旋转</button>
+        </div>
+    </div>
+    
+    <div class="config-section">
+        <h2>物理参数调整</h2>
+        <div class="config-controls">
+            <div class="control-group">
+                <label for="gravity">重力 (0-2000):</label>
+                <input type="range" id="gravity" min="0" max="2000" step="10" value="490">
+                <span id="gravity-value">490</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="friction">摩擦系数 (0-1):</label>
+                <input type="range" id="friction" min="0" max="1" step="0.01" value="0.98">
+                <span id="friction-value">0.98</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="restitution">反弹系数 (0-1):</label>
+                <input type="range" id="restitution" min="0" max="1" step="0.01" value="0.8">
+                <span id="restitution-value">0.8</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="rotation-speed">旋转速度 (-5 to 5):</label>
+                <input type="range" id="rotation-speed" min="-5" max="5" step="0.1" value="0.5">
+                <span id="rotation-speed-value">0.5</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="config-section">
+        <h2>当前配置</h2>
+        <button onclick="updateConfigDisplay()">刷新配置显示</button>
+        <button onclick="exportConfig()">导出配置</button>
+        <div id="config-output"></div>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/Config.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    
+    <script>
+        // 全局游戏实例
+        let game = null;
+        
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                // 创建游戏实例
+                game = new Game('physics-canvas');
+                game.start();
+                
+                // 设置控件事件监听器
+                setupControlListeners();
+                
+                // 初始化配置显示
+                updateConfigDisplay();
+                
+                console.log('配置系统测试页面初始化成功');
+                
+            } catch (error) {
+                console.error('初始化失败:', error);
+                document.getElementById('config-output').textContent = '初始化失败: ' + error.message;
+            }
+        });
+        
+        // 设置控件事件监听器
+        function setupControlListeners() {
+            // 重置和暂停按钮
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (game) game.reset();
+            });
+            
+            document.getElementById('pause-btn').addEventListener('click', () => {
+                if (game) game.togglePause();
+            });
+            
+            // 物理参数滑块
+            const controls = [
+                { id: 'gravity', path: 'physics.gravity', valueId: 'gravity-value' },
+                { id: 'friction', path: 'physics.frictionCoefficient', valueId: 'friction-value' },
+                { id: 'restitution', path: 'physics.restitution', valueId: 'restitution-value' },
+                { id: 'rotation-speed', path: 'hexagon.rotationSpeed', valueId: 'rotation-speed-value' }
+            ];
+            
+            controls.forEach(control => {
+                const slider = document.getElementById(control.id);
+                const valueDisplay = document.getElementById(control.valueId);
+                
+                // 初始化显示值
+                const currentValue = configManager.get(control.path);
+                slider.value = currentValue;
+                valueDisplay.textContent = currentValue;
+                
+                // 监听滑块变化
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    valueDisplay.textContent = value;
+                    configManager.set(control.path, value);
+                    
+                    // 如果游戏正在运行，立即应用变化
+                    if (game && !game.isPaused) {
+                        // 物理引擎会通过配置监听器自动更新
+                    }
+                });
+            });
+        }
+        
+        // 应用预设配置
+        function applyPreset(presetName) {
+            console.log('应用预设配置:', presetName);
+            
+            if (applyConfigPreset(presetName)) {
+                // 更新滑块显示
+                document.getElementById('gravity').value = configManager.get('physics.gravity');
+                document.getElementById('gravity-value').textContent = configManager.get('physics.gravity');
+                
+                document.getElementById('friction').value = configManager.get('physics.frictionCoefficient');
+                document.getElementById('friction-value').textContent = configManager.get('physics.frictionCoefficient');
+                
+                document.getElementById('restitution').value = configManager.get('physics.restitution');
+                document.getElementById('restitution-value').textContent = configManager.get('physics.restitution');
+                
+                document.getElementById('rotation-speed').value = configManager.get('hexagon.rotationSpeed');
+                document.getElementById('rotation-speed-value').textContent = configManager.get('hexagon.rotationSpeed');
+                
+                // 更新配置显示
+                updateConfigDisplay();
+                
+                // 重置游戏以应用新配置
+                if (game) {
+                    game.reset();
+                }
+            }
+        }
+        
+        // 更新配置显示
+        function updateConfigDisplay() {
+            const config = configManager.getAll();
+            document.getElementById('config-output').textContent = JSON.stringify(config, null, 2);
+        }
+        
+        // 导出配置
+        function exportConfig() {
+            const configJSON = configManager.exportToJSON();
+            
+            // 创建下载链接
+            const blob = new Blob([configJSON], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'physics-config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('配置已导出');
+        }
+        
+        // 全局调试对象
+        window.configTest = {
+            game: () => game,
+            config: configManager,
+            presets: CONFIG_PRESETS,
+            applyPreset: applyPreset,
+            updateDisplay: updateConfigDisplay
+        };
+    </script>
+</body>
+</html>

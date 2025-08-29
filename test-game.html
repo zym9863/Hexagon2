@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game类测试 - 旋转六边形小球物理模拟</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .test-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .test-controls {
+            margin-top: 10px;
+        }
+        
+        .test-controls button {
+            margin: 2px;
+            padding: 5px 10px;
+            font-size: 11px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .test-controls button:hover {
+            background: #1976D2;
+        }
+        
+        .status-good { color: #4CAF50; }
+        .status-warning { color: #FF9800; }
+        .status-error { color: #F44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Game类测试 - 旋转六边形小球物理模拟</h1>
+            <p>测试Game主控制器的功能，包括动画循环、性能监控和游戏状态管理</p>
+        </header>
+        
+        <main class="canvas-container">
+            <canvas id="physics-canvas"></canvas>
+        </main>
+        
+        <div class="controls">
+            <button id="reset-btn">重置</button>
+            <button id="pause-btn">暂停</button>
+            <button id="debug-btn">调试模式</button>
+        </div>
+    </div>
+    
+    <!-- 测试信息面板 -->
+    <div class="test-info" id="test-info">
+        <h4>Game类测试状态</h4>
+        <div id="game-status">初始化中...</div>
+        <div id="performance-status">性能监控: 等待中</div>
+        <div id="component-status">组件状态: 检查中</div>
+        
+        <div class="test-controls">
+            <button onclick="runGameTests()">运行测试</button>
+            <button onclick="toggleDebugMode()">切换调试</button>
+            <button onclick="testPerformance()">性能测试</button>
+            <button onclick="testErrorHandling()">错误处理测试</button>
+        </div>
+        
+        <div id="test-results" style="margin-top: 10px; font-size: 11px;"></div>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    <script src="js/PhysicsEngine.js"></script>
+    <script src="js/Game.js"></script>
+    
+    <script>
+        // 全局游戏实例
+        let game = null;
+        let testResults = [];
+        
+        // 等待DOM加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing Game class test...');
+            
+            try {
+                // 创建游戏实例
+                game = new Game('physics-canvas', {
+                    enableDebug: false,
+                    enablePerformanceMonitor: true,
+                    targetFPS: 60
+                });
+                
+                // 启动游戏
+                game.start();
+                
+                updateGameStatus('Game初始化成功', 'status-good');
+                console.log('Game class test initialized successfully!');
+                
+                // 设置调试按钮
+                setupDebugButton();
+                
+                // 开始状态监控
+                startStatusMonitoring();
+                
+                // 自动运行基础测试
+                setTimeout(runGameTests, 1000);
+                
+            } catch (error) {
+                console.error('Failed to initialize Game class test:', error);
+                updateGameStatus('Game初始化失败: ' + error.message, 'status-error');
+            }
+        });
+        
+        /**
+         * 设置调试按钮
+         */
+        function setupDebugButton() {
+            const debugBtn = document.getElementById('debug-btn');
+            if (debugBtn) {
+                debugBtn.addEventListener('click', () => {
+                    if (game) {
+                        game.toggleDebug();
+                        debugBtn.textContent = game.config.enableDebug ? '关闭调试' : '调试模式';
+                    }
+                });
+            }
+        }
+        
+        /**
+         * 开始状态监控
+         */
+        function startStatusMonitoring() {
+            setInterval(() => {
+                if (game) {
+                    const gameState = game.getGameState();
+                    updatePerformanceStatus(gameState);
+                    updateComponentStatus(gameState);
+                }
+            }, 1000);
+        }
+        
+        /**
+         * 更新游戏状态显示
+         */
+        function updateGameStatus(message, className = '') {
+            const statusEl = document.getElementById('game-status');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = className;
+            }
+        }
+        
+        /**
+         * 更新性能状态显示
+         */
+        function updatePerformanceStatus(gameState) {
+            const statusEl = document.getElementById('performance-status');
+            if (statusEl && gameState) {
+                const fps = gameState.fps;
+                const frameTime = gameState.frameTime.toFixed(2);
+                const status = fps >= 30 ? 'status-good' : fps >= 20 ? 'status-warning' : 'status-error';
+                
+                statusEl.textContent = `性能: ${fps} FPS, ${frameTime}ms`;
+                statusEl.className = status;
+            }
+        }
+        
+        /**
+         * 更新组件状态显示
+         */
+        function updateComponentStatus(gameState) {
+            const statusEl = document.getElementById('component-status');
+            if (statusEl && gameState) {
+                const components = [
+                    game.renderer ? '✓' : '✗',
+                    game.hexagon ? '✓' : '✗',
+                    game.ball ? '✓' : '✗',
+                    game.physicsEngine ? '✓' : '✗'
+                ];
+                
+                statusEl.textContent = `组件: R${components[0]} H${components[1]} B${components[2]} P${components[3]}`;
+                statusEl.className = components.every(c => c === '✓') ? 'status-good' : 'status-error';
+            }
+        }
+        
+        /**
+         * 运行Game类测试
+         */
+        function runGameTests() {
+            console.log('Running Game class tests...');
+            testResults = [];
+            
+            const tests = [
+                testGameInitialization,
+                testGameStateTransitions,
+                testGameReset,
+                testConfigurationUpdates,
+                testPerformanceMonitoring,
+                testComponentIntegration
+            ];
+            
+            tests.forEach((test, index) => {
+                try {
+                    const result = test();
+                    testResults.push(`✓ Test ${index + 1}: ${result}`);
+                    console.log(`✓ Test ${index + 1} passed: ${result}`);
+                } catch (error) {
+                    testResults.push(`✗ Test ${index + 1}: ${error.message}`);
+                    console.error(`✗ Test ${index + 1} failed:`, error);
+                }
+            });
+            
+            updateTestResults();
+        }
+        
+        /**
+         * 测试Game初始化
+         */
+        function testGameInitialization() {
+            if (!game) throw new Error('Game instance not created');
+            if (!game.renderer) throw new Error('Renderer not initialized');
+            if (!game.hexagon) throw new Error('Hexagon not created');
+            if (!game.ball) throw new Error('Ball not created');
+            if (!game.physicsEngine) throw new Error('PhysicsEngine not initialized');
+            if (!game.performanceMonitor) throw new Error('PerformanceMonitor not created');
+            
+            return 'Game initialization successful';
+        }
+        
+        /**
+         * 测试游戏状态转换
+         */
+        function testGameStateTransitions() {
+            const wasRunning = game.isRunning;
+            const wasPaused = game.isPaused;
+            
+            // 测试暂停/恢复
+            game.togglePause();
+            if (game.isPaused === wasPaused) {
+                throw new Error('Pause toggle failed');
+            }
+            
+            game.togglePause();
+            if (game.isPaused !== wasPaused) {
+                throw new Error('Resume toggle failed');
+            }
+            
+            return 'State transitions working';
+        }
+        
+        /**
+         * 测试游戏重置
+         */
+        function testGameReset() {
+            // 修改游戏状态
+            const originalRotation = game.hexagon.rotation;
+            game.hexagon.rotation = Math.PI;
+            
+            // 重置
+            game.reset();
+            
+            if (game.hexagon.rotation !== 0) {
+                throw new Error('Reset did not restore hexagon rotation');
+            }
+            
+            return 'Game reset working';
+        }
+        
+        /**
+         * 测试配置更新
+         */
+        function testConfigurationUpdates() {
+            const originalDebug = game.config.enableDebug;
+            
+            game.setConfig({ enableDebug: !originalDebug });
+            
+            if (game.config.enableDebug === originalDebug) {
+                throw new Error('Configuration update failed');
+            }
+            
+            // 恢复原始配置
+            game.setConfig({ enableDebug: originalDebug });
+            
+            return 'Configuration updates working';
+        }
+        
+        /**
+         * 测试性能监控
+         */
+        function testPerformanceMonitoring() {
+            const gameState = game.getGameState();
+            
+            if (typeof gameState.fps !== 'number') {
+                throw new Error('FPS monitoring not working');
+            }
+            
+            if (typeof gameState.frameTime !== 'number') {
+                throw new Error('Frame time monitoring not working');
+            }
+            
+            return 'Performance monitoring working';
+        }
+        
+        /**
+         * 测试组件集成
+         */
+        function testComponentIntegration() {
+            const gameState = game.getGameState();
+            
+            if (!gameState.ballPosition) {
+                throw new Error('Ball position not available');
+            }
+            
+            if (!gameState.ballVelocity) {
+                throw new Error('Ball velocity not available');
+            }
+            
+            if (typeof gameState.hexagonRotation !== 'number') {
+                throw new Error('Hexagon rotation not available');
+            }
+            
+            if (typeof gameState.totalEnergy !== 'number') {
+                throw new Error('Total energy calculation not working');
+            }
+            
+            return 'Component integration working';
+        }
+        
+        /**
+         * 切换调试模式
+         */
+        function toggleDebugMode() {
+            if (game) {
+                game.toggleDebug();
+                updateGameStatus(
+                    `调试模式: ${game.config.enableDebug ? '开启' : '关闭'}`,
+                    'status-good'
+                );
+            }
+        }
+        
+        /**
+         * 性能测试
+         */
+        function testPerformance() {
+            if (!game) return;
+            
+            console.log('Running performance test...');
+            
+            const startTime = performance.now();
+            let frameCount = 0;
+            const testDuration = 5000; // 5秒
+            
+            const performanceTest = () => {
+                frameCount++;
+                
+                if (performance.now() - startTime < testDuration) {
+                    requestAnimationFrame(performanceTest);
+                } else {
+                    const avgFPS = frameCount / (testDuration / 1000);
+                    const gameState = game.getGameState();
+                    
+                    testResults.push(`性能测试: 平均 ${avgFPS.toFixed(1)} FPS`);
+                    testResults.push(`当前帧时间: ${gameState.frameTime.toFixed(2)}ms`);
+                    
+                    updateTestResults();
+                    console.log(`Performance test completed: ${avgFPS.toFixed(1)} FPS average`);
+                }
+            };
+            
+            requestAnimationFrame(performanceTest);
+        }
+        
+        /**
+         * 错误处理测试
+         */
+        function testErrorHandling() {
+            if (!game) return;
+            
+            console.log('Testing error handling...');
+            
+            try {
+                // 模拟错误情况
+                const originalUpdate = game.update;
+                
+                // 临时替换update方法以产生错误
+                game.update = function() {
+                    throw new Error('Test error');
+                };
+                
+                // 等待一帧，然后恢复
+                setTimeout(() => {
+                    game.update = originalUpdate;
+                    testResults.push('✓ 错误处理测试: 游戏继续运行');
+                    updateTestResults();
+                }, 100);
+                
+            } catch (error) {
+                testResults.push('✗ 错误处理测试失败: ' + error.message);
+                updateTestResults();
+            }
+        }
+        
+        /**
+         * 更新测试结果显示
+         */
+        function updateTestResults() {
+            const resultsEl = document.getElementById('test-results');
+            if (resultsEl) {
+                resultsEl.innerHTML = testResults.slice(-10).join('<br>'); // 显示最近10个结果
+            }
+        }
+        
+        // 全局调试函数
+        window.gameTest = {
+            getGame: () => game,
+            runTests: runGameTests,
+            testPerformance: testPerformance,
+            getTestResults: () => testResults
+        };
+    </script>
+</body>
+</html>

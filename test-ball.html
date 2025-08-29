@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Class Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        canvas {
+            border: 2px solid #2196F3;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ball Class Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Visual Test</h2>
+        <canvas id="test-canvas" width="400" height="300"></canvas>
+        <p>You should see a hexagon with a ball inside that moves with physics.</p>
+    </div>
+    
+    <script src="js/Vector2D.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/Hexagon.js"></script>
+    <script src="js/Ball.js"></script>
+    
+    <script>
+        // Test framework
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(`Assertion failed: ${message}`);
+            }
+        }
+
+        function assertApproxEqual(actual, expected, tolerance = 0.001, message = '') {
+            if (Math.abs(actual - expected) > tolerance) {
+                throw new Error(`Assertion failed: ${message}. Expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function runTest(testName, testFunction) {
+            const resultsDiv = document.getElementById('test-results');
+            try {
+                testFunction();
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'test-result test-pass';
+                resultDiv.textContent = `✓ ${testName} - PASSED`;
+                resultsDiv.appendChild(resultDiv);
+                return true;
+            } catch (error) {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'test-result test-fail';
+                resultDiv.textContent = `✗ ${testName} - FAILED: ${error.message}`;
+                resultsDiv.appendChild(resultDiv);
+                console.error(`Test ${testName} failed:`, error);
+                return false;
+            }
+        }
+
+        // Test functions
+        function testBallCreation() {
+            const ball = new Ball(10, 20, 5, 2);
+            assert(ball.position.x === 10, 'Position X should be 10');
+            assert(ball.position.y === 20, 'Position Y should be 20');
+            assert(ball.radius === 5, 'Radius should be 5');
+            assert(ball.mass === 2, 'Mass should be 2');
+            assert(ball.velocity.x === 0, 'Initial velocity X should be 0');
+            assert(ball.velocity.y === 0, 'Initial velocity Y should be 0');
+        }
+
+        function testSetPositionAndVelocity() {
+            const ball = new Ball(0, 0, 10, 1);
+            ball.setPosition(30, 40);
+            ball.setVelocity(50, -25);
+            assert(ball.position.x === 30, 'Position X should be updated to 30');
+            assert(ball.position.y === 40, 'Position Y should be updated to 40');
+            assert(ball.velocity.x === 50, 'Velocity X should be 50');
+            assert(ball.velocity.y === -25, 'Velocity Y should be -25');
+        }
+
+        function testApplyForce() {
+            const ball = new Ball(0, 0, 10, 2);
+            const initialAcceleration = ball.acceleration.clone();
+            const force = new Vector2D(20, 40);
+            ball.applyForce(force);
+            
+            assertApproxEqual(ball.acceleration.x, initialAcceleration.x + 10, 0.001, 'Acceleration X should increase by 10');
+            assertApproxEqual(ball.acceleration.y, initialAcceleration.y + 20, 0.001, 'Acceleration Y should increase by 20');
+        }
+
+        function testPhysicsUpdate() {
+            const ball = new Ball(0, 0, 10, 1);
+            ball.setVelocity(10, 5);
+            ball.applyForce(new Vector2D(2, 4));
+            
+            const initialPos = ball.position.clone();
+            ball.update(0.1);
+            
+            assert(ball.position.x !== initialPos.x || ball.position.y !== initialPos.y, 'Position should change after update');
+            assert(ball.acceleration.x === 0 && ball.acceleration.y === 0, 'Acceleration should be reset after update');
+        }
+
+        function testKineticEnergy() {
+            const ball = new Ball(0, 0, 10, 2);
+            ball.setVelocity(10, 0);
+            const expectedKE = 0.5 * 2 * 10 * 10; // 100
+            assertApproxEqual(ball.getKineticEnergy(), expectedKE, 0.001, 'Kinetic energy calculation');
+        }
+
+        function testMomentum() {
+            const ball = new Ball(0, 0, 10, 3);
+            ball.setVelocity(4, 5);
+            const momentum = ball.getMomentum();
+            assertApproxEqual(momentum.x, 12, 0.001, 'Momentum X calculation');
+            assertApproxEqual(momentum.y, 15, 0.001, 'Momentum Y calculation');
+        }
+
+        function testBoundingBox() {
+            const ball = new Ball(100, 200, 15, 1);
+            const bbox = ball.getBoundingBox();
+            assert(bbox.minX === 85, 'Bounding box minX');
+            assert(bbox.minY === 185, 'Bounding box minY');
+            assert(bbox.maxX === 115, 'Bounding box maxX');
+            assert(bbox.maxY === 215, 'Bounding box maxY');
+        }
+
+        function testClone() {
+            const ball = new Ball(10, 20, 5, 2);
+            ball.setVelocity(30, 40);
+            const clonedBall = ball.clone();
+            
+            assert(clonedBall.position.x === ball.position.x, 'Cloned position X');
+            assert(clonedBall.position.y === ball.position.y, 'Cloned position Y');
+            assert(clonedBall.velocity.x === ball.velocity.x, 'Cloned velocity X');
+            assert(clonedBall.velocity.y === ball.velocity.y, 'Cloned velocity Y');
+            assert(clonedBall.radius === ball.radius, 'Cloned radius');
+            assert(clonedBall.mass === ball.mass, 'Cloned mass');
+            assert(clonedBall !== ball, 'Clone should be different object');
+        }
+
+        function testCreateInsideHexagon() {
+            const hexagon = new Hexagon(200, 150, 100);
+            const ball = Ball.createInsideHexagon(hexagon, 10, 1);
+            
+            assert(ball instanceof Ball, 'Should return a Ball instance');
+            assert(ball.radius === 10, 'Ball should have correct radius');
+            assert(ball.mass === 1, 'Ball should have correct mass');
+            assert(ball.isInsideHexagon(hexagon), 'Ball should be inside hexagon');
+        }
+
+        // Visual test
+        function setupVisualTest() {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new Renderer(canvas);
+            
+            // Create hexagon and ball
+            const hexagon = new Hexagon(200, 150, 80);
+            const ball = Ball.createInsideHexagon(hexagon, 8, 1);
+            ball.setVelocity(30, -20);
+            
+            let lastTime = 0;
+            
+            function animate(currentTime) {
+                const deltaTime = (currentTime - lastTime) / 1000;
+                lastTime = currentTime;
+                
+                if (deltaTime > 0 && deltaTime < 0.1) { // Prevent large time steps
+                    // Update hexagon rotation
+                    hexagon.update(deltaTime);
+                    
+                    // Apply simple gravity to ball
+                    ball.applyForce(new Vector2D(0, 98));
+                    ball.update(deltaTime);
+                    
+                    // Simple boundary check (keep ball in canvas)
+                    if (ball.position.x < ball.radius || ball.position.x > canvas.width - ball.radius) {
+                        ball.velocity.x *= -0.8;
+                        ball.position.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.position.x));
+                    }
+                    if (ball.position.y < ball.radius || ball.position.y > canvas.height - ball.radius) {
+                        ball.velocity.y *= -0.8;
+                        ball.position.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.position.y));
+                    }
+                }
+                
+                // Render
+                renderer.clear();
+                renderer.setBackground('#f8f9fa');
+                hexagon.render(renderer);
+                ball.render(renderer);
+                
+                requestAnimationFrame(animate);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Run all tests
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Running Ball class tests...');
+            
+            let passedTests = 0;
+            let totalTests = 0;
+            
+            const tests = [
+                ['Ball Creation', testBallCreation],
+                ['Set Position and Velocity', testSetPositionAndVelocity],
+                ['Apply Force', testApplyForce],
+                ['Physics Update', testPhysicsUpdate],
+                ['Kinetic Energy', testKineticEnergy],
+                ['Momentum', testMomentum],
+                ['Bounding Box', testBoundingBox],
+                ['Clone', testClone],
+                ['Create Inside Hexagon', testCreateInsideHexagon]
+            ];
+            
+            tests.forEach(([name, testFunc]) => {
+                totalTests++;
+                if (runTest(name, testFunc)) {
+                    passedTests++;
+                }
+            });
+            
+            // Summary
+            const resultsDiv = document.getElementById('test-results');
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `test-result ${passedTests === totalTests ? 'test-pass' : 'test-fail'}`;
+            summaryDiv.innerHTML = `<strong>Summary: ${passedTests}/${totalTests} tests passed</strong>`;
+            resultsDiv.appendChild(summaryDiv);
+            
+            // Setup visual test
+            setupVisualTest();
+            
+            console.log(`Ball class tests completed: ${passedTests}/${totalTests} passed`);
+        });
+    </script>
+</body>
+</html>
